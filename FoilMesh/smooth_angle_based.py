@@ -9,7 +9,7 @@ import numpy as np
 
 # import GraphicsItemsCollection as gic
 # import GraphicsItem
-from FoilMesh import connect
+from foilmesh import connect
 import logging
 logger = logging.getLogger(__name__)
 

@@ -1,1 +1,1 @@
-from FoilMesh import *
+from foilmesh.airfoil import *

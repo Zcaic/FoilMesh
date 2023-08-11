@@ -3,7 +3,7 @@ import copy
 
 import numpy as np
 
-from FoilMesh.utils import Utils
+from foilmesh.utils import Utils
 
 import logging
 logger = logging.getLogger(__name__)

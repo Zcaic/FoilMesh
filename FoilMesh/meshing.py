@@ -6,18 +6,16 @@ import locale
 import numpy as np
 from scipy import interpolate
 
-import meshio
+from foilmesh import meshio
 
-# from PySide6 import QtGui, QtCore, QtWidgets
+from foilmesh import elliptic
 
-# import PyAero
-# import GraphicsItemsCollection as gic
-# import GraphicsItem
-from FoilMesh import elliptic
-from FoilMesh.airfoil import Airfoil
+import typing
+if typing.TYPE_CHECKING:
+    from foilmesh.airfoil import Airfoil
 # from FoilMesh import connect
-from FoilMesh.smooth_angle_based import SmoothAngleBased
-from FoilMesh.utils import Utils
+from foilmesh.smooth_angle_based import SmoothAngleBased
+from foilmesh.utils import Utils
 # import logging
 # logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ from FoilMesh.utils import Utils
 class Windtunnel:
     """docstring for Windtunnel"""
 
-    def __init__(self,af:Airfoil):
+    def __init__(self,af:'Airfoil'):
 
         self.af=af
 

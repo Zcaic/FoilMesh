@@ -200,27 +200,27 @@ class Connect:
 
         return (vertices_clean, connectivity_clean, self.progdialog)
 
-    def draw_connectivity(self, vertices, deleted_nodes):
+    # def draw_connectivity(self, vertices, deleted_nodes):
 
-        self.connections = list()
+    #     self.connections = list()
 
-        # instantiate a graphics item
-        marker = gic.GraphicsCollection()
-         # set its properties
-        marker.pen.setColor(QtGui.QColor(60, 60, 255, 255))
-        marker.brush.setColor(QtGui.QColor(255, 50, 50, 230))
-        marker.pen.setWidthF(1.6)
-        # no pen thickness change when zoomed
-        marker.pen.setCosmetic(True)
+    #     # instantiate a graphics item
+    #     marker = gic.GraphicsCollection()
+    #      # set its properties
+    #     marker.pen.setColor(QtGui.QColor(60, 60, 255, 255))
+    #     marker.brush.setColor(QtGui.QColor(255, 50, 50, 230))
+    #     marker.pen.setWidthF(1.6)
+    #     # no pen thickness change when zoomed
+    #     marker.pen.setCosmetic(True)
 
-        for node in deleted_nodes:
-            marker.Circle(vertices[node][0], vertices[node][1], 0.003)
-            marker_item = GraphicsItem.GraphicsItem(marker)
-            self.connections.append(marker_item)
+    #     for node in deleted_nodes:
+    #         marker.Circle(vertices[node][0], vertices[node][1], 0.003)
+    #         marker_item = GraphicsItem.GraphicsItem(marker)
+    #         self.connections.append(marker_item)
             
-        # add to the scene
-        self.connections = self.mainwindow.scene. \
-            createItemGroup(self.connections)
+    #     # add to the scene
+    #     self.connections = self.mainwindow.scene. \
+    #         createItemGroup(self.connections)
 
     def write_debug(self, unconnected, connected, deleted_nodes, vertices, vertices_clean, connectivity_clean):
 

@@ -3,10 +3,12 @@ import copy
 import numpy as np
 from scipy import interpolate
 
-# from PySide6 import QtGui, QtCore
+import typing
 
-from FoilMesh.utils import Utils
-from FoilMesh.airfoil import Airfoil
+from foilmesh.utils import Utils
+
+if typing.TYPE_CHECKING:
+    from foilmesh.airfoil import Airfoil
 
 
 import logging
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class SplineRefine:
 
-    def __init__(self,af:Airfoil):
+    def __init__(self,af:'Airfoil'):
         self.af=af
         # get MainWindow instance (overcomes handling parents)
         # self.mainwindow = QtCore.QCoreApplication.instance().mainwindow
@@ -90,55 +92,55 @@ class SplineRefine:
 
         return camber
 
-    def makeLeCircle(self, rc, xc, yc, xle, yle):
+    # def makeLeCircle(self, rc, xc, yc, xle, yle):
 
-        # delete exitsing LE circle ItemGroup from scene
-        if hasattr(self.mainwindow.airfoil, 'le_circle') and \
-                self.mainwindow.airfoil.le_circle in self.mainwindow.scene.items():
-            self.mainwindow.scene.removeItem(self.mainwindow.airfoil.le_circle)
+    #     # delete exitsing LE circle ItemGroup from scene
+    #     if hasattr(self.mainwindow.airfoil, 'le_circle') and \
+    #             self.mainwindow.airfoil.le_circle in self.mainwindow.scene.items():
+    #         self.mainwindow.scene.removeItem(self.mainwindow.airfoil.le_circle)
 
-        # put LE circle, center and tangent point in a list
-        circles = list()
+    #     # put LE circle, center and tangent point in a list
+    #     circles = list()
 
-        circle = gic.GraphicsCollection()
-        circle.pen.setColor(QtGui.QColor(0, 150, 0, 255))
-        circle.pen.setWidthF(0.3)
-        # no pen thickness change when zoomed
-        circle.pen.setCosmetic(True)
-        circle.brush.setColor(QtGui.QColor(10, 200, 10, 150))
-        circle.Circle(xc, yc, rc)
+    #     circle = gic.GraphicsCollection()
+    #     circle.pen.setColor(QtGui.QColor(0, 150, 0, 255))
+    #     circle.pen.setWidthF(0.3)
+    #     # no pen thickness change when zoomed
+    #     circle.pen.setCosmetic(True)
+    #     circle.brush.setColor(QtGui.QColor(10, 200, 10, 150))
+    #     circle.Circle(xc, yc, rc)
 
-        circle = GraphicsItem.GraphicsItem(circle)
-        circles.append(circle)
+    #     circle = GraphicsItem.GraphicsItem(circle)
+    #     circles.append(circle)
 
-        circle = gic.GraphicsCollection()
-        circle.pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        circle.pen.setWidthF(0.3)
-        # no pen thickness change when zoomed
-        circle.pen.setCosmetic(True)
-        circle.brush.setColor(QtGui.QColor(255, 0, 0, 255))
-        circle.Circle(xc, yc, 0.0002)
+    #     circle = gic.GraphicsCollection()
+    #     circle.pen.setColor(QtGui.QColor(255, 0, 0, 255))
+    #     circle.pen.setWidthF(0.3)
+    #     # no pen thickness change when zoomed
+    #     circle.pen.setCosmetic(True)
+    #     circle.brush.setColor(QtGui.QColor(255, 0, 0, 255))
+    #     circle.Circle(xc, yc, 0.0002)
 
-        circle = GraphicsItem.GraphicsItem(circle)
-        circles.append(circle)
+    #     circle = GraphicsItem.GraphicsItem(circle)
+    #     circles.append(circle)
 
-        circle = gic.GraphicsCollection()
-        circle.pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        circle.pen.setWidthF(1.6)
-        # no pen thickness change when zoomed
-        circle.pen.setCosmetic(True)
-        circle.brush.setColor(QtGui.QColor(255, 0, 0, 255))
-        circle.Circle(xle, yle, 0.0002)
+    #     circle = gic.GraphicsCollection()
+    #     circle.pen.setColor(QtGui.QColor(255, 0, 0, 255))
+    #     circle.pen.setWidthF(1.6)
+    #     # no pen thickness change when zoomed
+    #     circle.pen.setCosmetic(True)
+    #     circle.brush.setColor(QtGui.QColor(255, 0, 0, 255))
+    #     circle.Circle(xle, yle, 0.0002)
 
-        circle = GraphicsItem.GraphicsItem(circle)
-        circles.append(circle)
+    #     circle = GraphicsItem.GraphicsItem(circle)
+    #     circles.append(circle)
 
-        self.mainwindow.airfoil.le_circle = \
-            self.mainwindow.scene.createItemGroup(circles)
-        self.mainwindow.airfoil.le_circle.setZValue(110)
+    #     self.mainwindow.airfoil.le_circle = \
+    #         self.mainwindow.scene.createItemGroup(circles)
+    #     self.mainwindow.airfoil.le_circle.setZValue(110)
 
-        self.mainwindow.centralwidget.cb7.setChecked(True)
-        self.mainwindow.centralwidget.cb7.setEnabled(True)
+    #     self.mainwindow.centralwidget.cb7.setChecked(True)
+    #     self.mainwindow.centralwidget.cb7.setEnabled(True)
 
     def spline(self, x, y, points=200, degree=2, evaluate=False):
         """Interpolate spline through given points
@@ -364,21 +366,21 @@ class SplineRefine:
         sp *= thickness
         return sp
 
-    def writeContour(self):
+    # def writeContour(self):
 
-        xr = self.raw_coordinates[0]
-        xc = self.coordinates[0]
-        yc = self.coordinates[1]
-        s = '# Spline with {0} points based on initial contour'.format(len(xc))
-        s1 = '({0} points)\n'.format(len(xr))
-        info = s + s1
+    #     xr = self.raw_coordinates[0]
+    #     xc = self.coordinates[0]
+    #     yc = self.coordinates[1]
+    #     s = '# Spline with {0} points based on initial contour'.format(len(xc))
+    #     s1 = '({0} points)\n'.format(len(xr))
+    #     info = s + s1
 
-        with open(self.name + '_spline_' + str(len(xc)) + '.dat', 'w') as f:
-            f.write('#\n')
-            f.write('# Airfoil: ' + self.name + '\n')
-            f.write('# Created from ' + self.filename + '\n')
-            f.write(info)
-            f.write('#\n')
-            for i in range(len(xc)):
-                data = '{:10.8f} {:10.8f} \n'.format(xc[i], yc[i])
-                f.write(data)
+    #     with open(self.name + '_spline_' + str(len(xc)) + '.dat', 'w') as f:
+    #         f.write('#\n')
+    #         f.write('# Airfoil: ' + self.name + '\n')
+    #         f.write('# Created from ' + self.filename + '\n')
+    #         f.write(info)
+    #         f.write('#\n')
+    #         for i in range(len(xc)):
+    #             data = '{:10.8f} {:10.8f} \n'.format(xc[i], yc[i])
+    #             f.write(data)

@@ -1,16 +1,19 @@
 import copy
 
 import numpy as np
+import typing
 
 # from PySide6 import QtGui, QtCore
-from FoilMesh.utils import Utils
-import FoilMesh.contourAnalysis as ca
-from FoilMesh.airfoil import Airfoil
+from foilmesh.utils import Utils
+import foilmesh.contourAnalysis as ca
+
+if typing.TYPE_CHECKING:
+    from foilmesh.airfoil import Airfoil
 
 
 class TrailingEdge:
 
-    def __init__(self,af:Airfoil):
+    def __init__(self,af:'Airfoil'):
         self.af=af
 
         # get MainWindow instance (overcomes handling parents)

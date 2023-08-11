@@ -1,11 +1,15 @@
 import json
 from pathlib import Path
 
-from FoilMesh.airfoil import Airfoil
-from FoilMesh.splinerefine import SplineRefine
-from FoilMesh.trailingedge import TrailingEdge
-from FoilMesh import meshing as meshing
-from FoilMesh import connect
+from foilmesh.airfoil import Airfoil
+from foilmesh.splinerefine import SplineRefine
+from foilmesh.trailingedge import TrailingEdge
+from foilmesh import meshing as meshing
+from foilmesh import connect
+
+# from FoilMesh import controldict
+
+# controldict.ControlDict.Airfoil_data
 
 with open("batch.json", "r") as fin:
     batch_control = json.load(fin)

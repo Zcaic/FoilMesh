@@ -100,20 +100,20 @@ class ContourAnalysis():
 
         self.drawContour()
 
-    def drawContour(self, quantity='gradient'):
-        """quantity is one of 'gradient', 'curvature', 'radius' """
+    # def drawContour(self, quantity='gradient'):
+    #     """quantity is one of 'gradient', 'curvature', 'radius' """
 
-        spline_data = self.mainwindow.airfoil.spline_data
-        curvature_data = self.mainwindow.airfoil.curvature_data
+    #     spline_data = self.mainwindow.airfoil.spline_data
+    #     curvature_data = self.mainwindow.airfoil.curvature_data
 
-        selector = {'gradient': 0, 'curvature': 1, 'radius': 2}
+    #     selector = {'gradient': 0, 'curvature': 1, 'radius': 2}
 
-        points = [QtCore.QPointF(x, y) for x, y in zip(spline_data[0][0],
-            curvature_data[selector[quantity]])]
+    #     points = [QtCore.QPointF(x, y) for x, y in zip(spline_data[0][0],
+    #         curvature_data[selector[quantity]])]
 
-        self.lineSeries = QtCharts.QLineSeries()
-        self.lineSeries.append(points)
-        self.chart.removeAllSeries()
-        self.chart.addSeries(self.lineSeries)
-        self.chart.setAxisX(self.axisX, self.lineSeries)
-        self.chart.setAxisY(self.axisY, self.lineSeries)
+    #     self.lineSeries = QtCharts.QLineSeries()
+    #     self.lineSeries.append(points)
+    #     self.chart.removeAllSeries()
+    #     self.chart.addSeries(self.lineSeries)
+    #     self.chart.setAxisX(self.axisX, self.lineSeries)
+    #     self.chart.setAxisY(self.axisY, self.lineSeries)

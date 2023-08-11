@@ -1,60 +1,59 @@
-
 import numpy as np
+from pathlib import Path
+import json
 
-# from PySide6 import QtGui, QtCore
+from foilmesh.splinerefine import SplineRefine
+from foilmesh.trailingedge import TrailingEdge
+from foilmesh import meshing as meshing
 
-# import GraphicsItemsCollection as gic
-# import GraphicsItem
+from foilmesh import connect
+from foilmesh.controldict import ControlDict, extension
 
 import logging
+from typing import Union
+
 logger = logging.getLogger(__name__)
 
 
 class Airfoil:
     """Class to read airfoil data from file (or use predefined airfoil)
 
-    The Airfoil object carries several graphics items:
-        e.g. raw data, chord, camber, etc.
-
     Attributes:
-        brushcolor (QColor): fill color for airfoil
-        chord (QGraphicsItem): Description
-        item (QGraphicsItem): graphics item derived from QPolygonF object
-        name (str): airfoil name (without path)
-        pencolor (QColor): color for airoil outline
         penwidth (float): thickness of airfoil outline
         raw_coordinates (numpy array): list of contour points as tuples
     """
 
     def __init__(self, name):
-
         # get MainWindow instance (overcomes handling parents)
         # self.mainwindow = QtCore.QCoreApplication.instance().mainwindow
 
         self.name = name
         self.chord = None
         self.has_TE = False
-        self.contourPolygon = None
+        # self.contourPolygon = None
         # self.contourSpline = None
         self.spline_data = None
         self.raw_coordinates = None
-        # self.pencolor = QtGui.QColor(0, 20, 255, 255)
-        self.penwidth = 4.0
-        # self.brushcolor = QtGui.QColor()
-        # self.brushcolor.setNamedColor('#7c8696')
- 
-    def readContour(self, filename, comment):
+        # self.penwidth = 4.0
+        self.control = ControlDict
 
-        try:
-            with open(filename, mode='r') as f:
-                lines = f.readlines()
-        except IOError as error:
-            # exc_info=True sends traceback to the logger
-            logger.error('Failed to open file {} with error {}'. \
-                         format(filename, error), exc_info=True)
-            return False
+    def readContour(self, filename: Union[str, np.ndarray]):
+        if isinstance(filename, np.ndarray):
+            filename = filename.astype("str").tolist()
+            data = [" ".join(i) for i in filename]
+        else:
+            try:
+                with open(filename, mode="r") as f:
+                    lines = f.readlines()
+            except IOError as error:
+                # exc_info=True sends traceback to the logger
+                logger.error(
+                    "Failed to open file {} with error {}".format(filename, error),
+                    exc_info=True,
+                )
+                return False
 
-        data = [line for line in lines if comment not in line]
+            data = [line.strip() for line in lines[1:] if line.strip() != ""]
 
         # find and drop duplicate points (except first and last)
         data_clean = list()
@@ -62,14 +61,14 @@ class Airfoil:
             if index == 0:
                 data_clean.append(line)
                 continue
-            elif index == len(data)-1:
+            elif index == len(data) - 1:
                 data_clean.append(line)
-                break   
-            
-            if line != data[index-1]:
+                break
+
+            if line != data[index - 1]:
                 data_clean.append(line)
             else:
-                logger.info('Dropped duplicate point {}'.format(line))
+                logger.info("Dropped duplicate point {}".format(line))
 
         # check for correct data
         # specifically important for drag and drop
@@ -77,14 +76,15 @@ class Airfoil:
             x = [float(l.split()[0]) for l in data_clean]
             y = [float(l.split()[1]) for l in data_clean]
         except (ValueError, IndexError) as error:
-            logger.error('Unable to parse file file {}'. \
-                         format(filename))
-            logger.error('Following error occured: {}'.format(error))
+            logger.error("Unable to parse file file {}".format(filename))
+            logger.error("Following error occured: {}".format(error))
             return False
         except:
             # exc_info=True sends traceback to the logger
-            logger.error('Unable to parse file file {}. Unknown error caught'\
-                         .format(filename), exc_info=True)
+            logger.error(
+                "Unable to parse file file {}. Unknown error caught".format(filename),
+                exc_info=True,
+            )
             return False
 
         # store airfoil coordinates as list of tuples
@@ -97,222 +97,136 @@ class Airfoil:
         self.raw_coordinates[1] /= divisor
 
         self.offset = [np.min(y), np.max(y)]
-
         return True
 
-    def makeAirfoil(self):
-        # make polygon graphicsitem from coordinates
-        self.makeContourPolygon()
-        self.makeChord()
-        self.makePolygonMarkers()
+    def readControl(self, jsonfile):
+        with open(jsonfile, "r") as fin:
+            data = json.load(fin)
+        self.control.Airfoil_file = data["Airfoil_file"]
+        self.control.Output = data["Output"]
+        self.control.Spline_refine.update(data["Spline_refine"])
+        self.control.Trailing_edges = data["Trailing_edges"]
+        self.control.Trailing_control.update(data["Trailing_control"])
+        self.control.Airfoil_mesh.update(data["Airfoil_mesh"])
+        self.control.Trailing_mesh.update(data["trailing_mesh"])
+        self.control.Windtunnel_airfoil.update(data["Windtunnel_airfoil"])
+        self.control.Windtunnel_wake.update(data["Windtunnel_wake"])
 
-        # activate ckeck boxes for contour points and chord in viewing options
-        self.mainwindow.centralwidget.cb2.setChecked(True)
-        self.mainwindow.centralwidget.cb2.setEnabled(True)
-        self.mainwindow.centralwidget.cb10.setChecked(True)
-        self.mainwindow.centralwidget.cb10.setEnabled(True)
-        self.mainwindow.centralwidget.cb5.setChecked(True)
-        self.mainwindow.centralwidget.cb5.setEnabled(True)
+    def StructureMesh(self):
+        if (
+            self.control.Airfoil_data is not None
+            and self.control.Airfoil_file is not None
+        ):
+            logging.error("Airdoil_file and Airfoil_data only one can be defined!")
+        else:
+            print(f'---> Airfoil "{self.name}" to mesh --->')
+            print("---> Start mesh structure gird --->")
+            if self.control.Airfoil_file is not None:
+                self.readContour(self.control.Airfoil_file)
+            else:
+                self.readContour(self.control.Airfoil_data)
+            refine = SplineRefine(self)
+            refine.doSplineRefine(
+                tolerance=self.control.Spline_refine["Refinement tolerance"],
+                points=self.control.Spline_refine["Number of points on spline"],
+                ref_te=self.control.Spline_refine["Refine trailing edge old"],
+                ref_te_n=self.control.Spline_refine["Refine trailing edge new"],
+                ref_te_ratio=self.control.Spline_refine["Refine trailing edge ratio"],
+            )
 
-    # FIXME
-    # FIXME why is this static? should it be done with self?
-    # FIXME refactor this function
-    # FIXME
-    @staticmethod
-    def addToScene(airfoil, scene):
-        """add all items to the scene"""
-        scene.addItem(airfoil.contourPolygon)
-        scene.addItem(airfoil.chord)
-        airfoil.polygonMarkersGroup = scene. \
-            createItemGroup(airfoil.polygonMarkers)
+            if self.control.Trailing_edges:
+                self.has_TE = True
+                te = self.control.Trailing_control
+                trailing = TrailingEdge(self)
+                trailing.trailingEdge(
+                    blend=te["Upper side blending length"] / 100.0,
+                    ex=te["Upper blending polynomial exponent"],
+                    thickness=te["Trailing edge thickness relative to chord"],
+                    side="upper",
+                )
+                trailing.trailingEdge(
+                    blend=te["Lower side blending length"] / 100.0,
+                    ex=te["Lower blending polynomial exponent"],
+                    thickness=te["Trailing edge thickness relative to chord"],
+                    side="lower",
+                )
 
-    def makeContourPolygon(self):
-        """Add airfoil points as GraphicsItem to the scene"""
+            wind_tunnel = meshing.Windtunnel(self)
+            contour = self.spline_data[0]
 
-        # instantiate a graphics item
-        contour = gic.GraphicsCollection()
-        # make it polygon type and populate its points
-        points = [QtCore.QPointF(x, y) for x, y in zip(*self.raw_coordinates)]
-        contour.Polygon(QtGui.QPolygonF(points), self.name)
-        # set its properties
-        contour.pen.setColor(self.pencolor)
-        contour.pen.setWidthF(self.penwidth)
-        # no pen thickness change when zoomed
-        contour.pen.setCosmetic(True)
-        contour.brush.setColor(self.brushcolor)
+            # mesh around airfoil
+            acm = self.control.Airfoil_mesh
+            wind_tunnel.AirfoilMesh(
+                name="block_airfoil",
+                contour=contour,
+                divisions=acm["Divisions normal to airfoil"],
+                ratio=acm["Cell growth rate"],
+                thickness=acm["1st cell layer thickness"],
+            )
 
-        self.contourPolygon = GraphicsItem.GraphicsItem(contour)
+            # mesh at trailing edge
+            tem = self.control.Trailing_mesh
+            wind_tunnel.TrailingEdgeMesh(
+                name="block_TE",
+                te_divisions=tem["Divisions at trailing edge"],
+                thickness=tem["1st cell layer thickness"],
+                divisions=tem["Divisions downstream"],
+                ratio=tem["Cell growth rate"],
+            )
 
-    def makePolygonMarkers(self):
-        """Create marker for polygon contour"""
+            # mesh tunnel airfoil
+            tam = self.control.Windtunnel_airfoil
+            wind_tunnel.TunnelMesh(
+                name="block_tunnel",
+                tunnel_height=tam["Windtunnel height"],
+                divisions_height=tam["Divisions of tunnel height"],
+                ratio_height=tam["Cell thickness ratio"],
+                dist=tam["Distribution biasing"],
+                smoothing_algorithm=tam["Smoothing algorithm"],
+                smoothing_iterations=tam["Smoothing iterations"],
+                smoothing_tolerance=tam["Smoothing tolerance"],
+            )
 
-        self.polygonMarkers = list()
+            # mesh tunnel wake
+            twm = self.control.Windtunnel_wake
+            wind_tunnel.TunnelMeshWake(
+                name="block_tunnel_wake",
+                tunnel_wake=twm["Windtunnel wake"],
+                divisions=twm["Divisions in the wake"],
+                ratio=twm["Cell thickness ratio"],
+                spread=twm["Equalize vertical wake line at"] / 100.0,
+            )
+            cnt=connect.Connect(None)
+            # connect = connect.Connect(None)
+            vertices, connectivity, _ = cnt.connectAllBlocks(wind_tunnel.blocks)
 
-        for x, y in zip(*self.raw_coordinates):
+            # add mesh to Wind-tunnel instance
+            wind_tunnel.mesh = vertices, connectivity
 
-            marker = gic.GraphicsCollection()
-            marker.pen.setColor(QtGui.QColor(60, 60, 80, 255))
-            marker.pen.setWidthF(1.6)
-            # no pen thickness change when zoomed
-            marker.pen.setCosmetic(True)
-            marker.brush.setColor(QtGui.QColor(217, 63, 122, 255))
-            # circle size doesn't do anything here
-            # this is indirectly deactivated because we don't want to change
-            # marker size during zoom
-            # the sizing is thus handled in graphicsview adjustMarkerSize
-            # there a fixed markersize in pixels is taken from settings which
-            # can be configured by the user
+            # generate cell to edge connectivity from mesh
+            wind_tunnel.makeLCE()
 
-            # FIXME
-            # FIXME this size still affects the items size for the scene.itemsBoundingRect()
-            # FIXME this is affecting slots.onViewAll()
-            # FIXME there it is not directly visible as adjustMarkerSize is called
-            # FIXME the fit acts to the size that shows up when adjustMarkerSize
-            # FIXME would not be called
-            # FIXME
-            marker.Circle(x, y, 0.004)
+            # generate cell to edge connectivity from mesh
+            wind_tunnel.makeLCE()
 
-            markerItem = GraphicsItem.GraphicsItem(marker)
+            # generate boundaries from mesh connectivity
+            wind_tunnel.makeBoundaries()
 
-            self.polygonMarkers.append(markerItem)
+            print("<--- Finished meshing <---")
+            print("---> Starting mesh export --->")
 
-    def makeChord(self):
-        line = gic.GraphicsCollection()
-        color = QtGui.QColor(52, 235, 122, 255)
-        line.pen.setColor(color)
-        line.pen.setWidthF(2.5)
-        # no pen thickness change when zoomed
-        line.pen.setCosmetic(True)
-        # setting CustomDashLine not needed as it will be set
-        # implicitely by Qt when CustomDashLine is applied
-        # put it just for completeness
-        line.pen.setStyle(QtCore.Qt.CustomDashLine)
-        stroke = 10
-        dot = 1
-        space = 5
-        line.pen.setDashPattern([stroke, space, dot, space])
-        index_min = np.argmin(self.raw_coordinates[0])
-        index_max = np.argmax(self.raw_coordinates[0])
-        x1 = self.raw_coordinates[0][index_min]
-        y1 = self.raw_coordinates[1][index_min]
-        x2 = self.raw_coordinates[0][index_max]
-        y2 = self.raw_coordinates[1][index_max]
-        line.Line(x1, y1, x2, y2)
+            mesh_name = Path(self.control.Output)
+            getattr(meshing.BlockMesh, "write" + extension[mesh_name.suffix])(
+                wind_tunnel, name=mesh_name
+            )
 
-        self.chord = GraphicsItem.GraphicsItem(line)
-        self.chord.setZValue(99)
-        self.chord.setAcceptHoverEvents(False)
+            print("<--- Finished mesh export <---")
 
-    def makeContourSpline(self):
-        """Add splined and refined airfoil points as GraphicsItem to
-        the scene
-        """
-        self.pencolor = QtGui.QColor(80, 80, 220, 255)
-        self.penwidth = 4.0
 
-        # instantiate a graphics item
-        splinecontour = gic.GraphicsCollection()
-        # make it polygon type and populate its points
-        points = [QtCore.QPointF(x, y) for x, y in zip(*self.spline_data[0])]
-        splinecontour.Polygon(QtGui.QPolygonF(points), self.name)
-        # set its properties
-        splinecontour.pen.setColor(self.pencolor)
-        splinecontour.pen.setWidthF(self.penwidth)
-        # no pen thickness change when zoomed
-        splinecontour.pen.setCosmetic(True)
+if __name__ == "__main__":
+    import foilmesh as fm
 
-        # remove items from iterated uses of spline/refine and trailing edge
-        if hasattr(self, 'contourSpline') and \
-                self.contourSpline in self.mainwindow.scene.items():
-            self.mainwindow.scene.removeItem(self.contourSpline)
-        self.contourSpline = GraphicsItem.GraphicsItem(splinecontour)
-        self.mainwindow.scene.addItem(self.contourSpline)
-
-        # remove items from iterated uses of spline/refine and trailing edge
-        if hasattr(self, 'splineMarkersGroup') and \
-                self.splineMarkersGroup in self.mainwindow.scene.items():
-            self.mainwindow.scene.removeItem(self.splineMarkersGroup)
-        self.makeSplineMarkers()
-        self.splineMarkersGroup = self.mainwindow.scene. \
-            createItemGroup(self.splineMarkers)
-
-        self.mainwindow.airfoil.contourSpline.brush. \
-            setStyle(QtCore.Qt.SolidPattern)
-        color = QtGui.QColor()
-        color.setNamedColor('#7c8696')
-        self.contourSpline.brush.setColor(color)
-        self.polygonMarkersGroup.setZValue(100)
-
-        # switch off raw contour and toogle corresponding checkbox
-        if self.polygonMarkersGroup.isVisible():
-            self.mainwindow.centralwidget.cb2.click()
-        if self.contourPolygon.isVisible():
-            self.mainwindow.centralwidget.cb10.click()
-
-        # activate ckeck boxes for contour points and chord in viewing options
-        self.mainwindow.centralwidget.cb3.setChecked(True)
-        self.mainwindow.centralwidget.cb3.setEnabled(True)
-        self.mainwindow.centralwidget.cb4.setChecked(True)
-        self.mainwindow.centralwidget.cb4.setEnabled(True)
-
-        self.mainwindow.view.adjustMarkerSize()
-
-    def makeSplineMarkers(self):
-        """Create marker for polygon contour"""
-
-        self.splineMarkers = list()
-
-        for x, y in zip(*self.spline_data[0]):
-
-            # put airfoil contour points as graphicsitem
-            splinemarker = gic.GraphicsCollection()
-            splinemarker.pen.setColor(QtGui.QColor(60, 60, 80, 255))
-            splinemarker.pen.setWidthF(1.6)
-            # no pen thickness change when zoomed
-            splinemarker.pen.setCosmetic(True)
-            splinemarker.brush.setColor(QtGui.QColor(203, 250, 72, 255))
-
-            splinemarker.Circle(x, y, 0.004)
-
-            splineMarkerItem = GraphicsItem.GraphicsItem(splinemarker)
-
-            self.splineMarkers.append(splineMarkerItem)
-
-    def drawCamber(self, camber):
-
-        self.pencolor = QtGui.QColor(220, 80, 80, 255)
-        self.penwidth = 3.5
-
-        # instantiate a graphics item
-        camberline = gic.GraphicsCollection()
-        # make it polygon type and populate its points
-        points = [QtCore.QPointF(x, y) for x, y in zip(*camber)]
-        camberline.Polyline(QtGui.QPolygonF(points))
-        # set its properties
-        camberline.pen.setColor(self.pencolor)
-        camberline.pen.setWidthF(self.penwidth)
-        # camberline.pen.setStyle(QtCore.Qt.DashLine)
-        camberline.pen.setStyle(QtCore.Qt.DotLine)
-        # no pen thickness change when zoomed
-        camberline.pen.setCosmetic(True)
-        camberline.brush.setColor(self.brushcolor)
-        # add the spline polygon without filling
-        camberline.brush.setStyle(QtCore.Qt.NoBrush)
-
-        # remove items from iterated uses of spline/refine and trailing edge
-        if hasattr(self, 'camberline') and \
-                self.camberline in self.mainwindow.scene.items():
-            self.mainwindow.scene.removeItem(self.camberline)
-        self.camberline = GraphicsItem.GraphicsItem(camberline)
-        self.camberline.setAcceptHoverEvents(False)
-        self.camberline.setZValue(99)
-        self.mainwindow.scene.addItem(self.camberline)
-        self.mainwindow.centralwidget.cb9.setChecked(True)
-        self.mainwindow.centralwidget.cb9.setEnabled(True)
-
-    def setPenColor(self, r, g, b, a):
-        self.pencolor = QtGui.QColor(r, g, b, a)
-
-    def setBrushColor(self, r, g, b, a):
-        self.brushcolor = QtGui.QColor(r, g, b, a)
-
+    af = fm.Airfoil(name="myairfoil")
+    # af.control.Airfoil_data=np.array([[1.00,0.95],[0.89565,0.777]])
+    af.readControl("./example.json")
+    af.StructureMesh()

@@ -3,7 +3,7 @@ from setuptools import setup,find_packages
 setup(
     name='FoilMesh',
     author='Zcaic',
-    version='0.0.1',
+    version='0.0.2',
     description='FoilMesh is a tool to mesh airfoil structural grid',
     url="https://github.com/Zcaic/Foilmesh",
     keywords="aerodynamics cfd airfoil grid mesh",

@@ -223,7 +223,7 @@ class Airfoil:
                 wind_tunnel, name=mesh_name
             )
 
-            print("<--- Finished mesh export <---")
+            print(f"<--- Finished \"{mesh_name}\" export <---")
 
 
 if __name__ == "__main__":

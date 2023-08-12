@@ -219,6 +219,9 @@ class Airfoil:
             print("---> Starting mesh export --->")
 
             mesh_name = Path(self.control.Output)
+            mesh_folder=mesh_name.parent
+            if not mesh_folder.exists():
+                mesh_folder.mkdir(parents=True,exist_ok=True)
             getattr(meshing.BlockMesh, "write" + extension[mesh_name.suffix])(
                 wind_tunnel, name=mesh_name
             )

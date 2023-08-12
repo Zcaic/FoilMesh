@@ -1,7 +1,7 @@
 {
   "Airfoil_file":"./optimized_airfoil.dat",
   "Airfoil_data":null,
-  "Output": "./mesh.su2",
+  "Output": "./Mesh/mesh.su2",
   "Spline_refine": {
     "Refinement tolerance": 172.0,
     "Refine trailing edge old": 3,

@@ -9,5 +9,9 @@ setup(
     keywords="aerodynamics cfd airfoil grid mesh",
     packages=find_packages(),
     python_requires='>=3.0',
-    install_requires=['numpy'],
+    install_requires=[
+        'numpy',
+        'scipy',
+        'rich'              
+        ],
 )

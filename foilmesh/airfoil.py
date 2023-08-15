@@ -110,7 +110,7 @@ class Airfoil:
         self.control.Trailing_edges = data["Trailing_edges"]
         self.control.Trailing_control.update(data["Trailing_control"])
         self.control.Airfoil_mesh.update(data["Airfoil_mesh"])
-        self.control.Trailing_mesh.update(data["trailing_mesh"])
+        self.control.Trailing_mesh.update(data["Trailing_mesh"])
         self.control.Windtunnel_airfoil.update(data["Windtunnel_airfoil"])
         self.control.Windtunnel_wake.update(data["Windtunnel_wake"])
 

@@ -22,7 +22,7 @@
     "1st cell layer thickness": 0.004,
     "Cell growth rate": 1.05
   },
-  "trailing_mesh": {
+  "Trailing_mesh": {
     "Divisions at trailing edge": 3,
     "Divisions downstream": 15,
     "1st cell layer thickness": 0.004,

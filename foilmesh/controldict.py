@@ -54,7 +54,7 @@ class ControlDict:
             "1st cell layer thickness": 0.004,\n
             "Cell growth rate": 1.05\n
         },\n
-        "trailing_mesh": {\n
+        "Trailing_mesh": {\n
             "Divisions at trailing edge": 3,\n
             "Divisions downstream": 15,\n
             "1st cell layer thickness": 0.004,\n

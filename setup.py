@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='FoilMesh',
     author='Zcaic',
-    version='0.0.6',
+    version='0.0.7',
     description='FoilMesh is a tool to mesh airfoil structural grid',
     long_description=long_description,
     long_description_content_type='text/markdown',

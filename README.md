@@ -3,7 +3,11 @@ The meshing code is extracted from [PyAero](https://github.com/chiefenne/PyAero)
 ![mesh zoom](./assert/mesh_zoom.gif "mesh")<br>
 
 # Install
-1.
+1. 
+    ```
+    pip install foilmesh
+    ```
+2.
     ```
     git clone https://github.com/Zcaic/Foilmesh.git
     cd Foilmesh && pip install .
